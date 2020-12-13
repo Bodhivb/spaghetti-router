@@ -5,3 +5,6 @@
 tsconfig.json
 *.ts
 *.tsx
+
+#Allow
+!*.d.ts
