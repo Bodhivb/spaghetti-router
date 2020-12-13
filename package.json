@@ -1,0 +1,32 @@
+{
+  "name": "spaghetti-router",
+  "version": "0.1.0",
+  "description": "Cook your React pages with spaghetti-router today!",
+  "main": "source/index.js",
+  "scripts": {
+    "test": "tsc --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Bodhivb/spaghetti-router.git"
+  },
+  "keywords": [
+    "react",
+    "react-router",
+    "router",
+    "spaghetti-router"
+  ],
+  "author": "Bodhi van Baardewijk",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Bodhivb/spaghetti-router/issues"
+  },
+  "homepage": "https://github.com/Bodhivb/spaghetti-router#readme",
+  "devDependencies": {
+    "@types/react": "^17.0.0",
+    "typescript": "^4.1.3"
+  },
+  "dependencies": {
+    "react": "^17.0.1"
+  }
+}
