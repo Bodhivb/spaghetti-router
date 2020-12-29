@@ -9,6 +9,7 @@ interface IProps {
 
 interface IState {
   history: Array<IRoute>;
+  currentIndex: number;
 }
 
 export class Router extends Component<IProps, IState> {
@@ -16,6 +17,7 @@ export class Router extends Component<IProps, IState> {
 
   state: IState = {
     history: [UrlProcessor.Process(this.props.routes ?? [])],
+    currentIndex: 0,
   };
 
   /** Initialize the singelton */
@@ -23,27 +25,39 @@ export class Router extends Component<IProps, IState> {
     super(props);
     Router.instance = this;
 
-    window.addEventListener("popstate", this.backPressedListener);
-    window.history.pushState(
-      {},
-      "page: " + this.state.history[this.state.history.length - 1].path
-    );
+    window.addEventListener("popstate", this.historyChangeListener);
+    window.history.replaceState({ page: 0 }, "Homepage");
   }
 
-  /** Check if the back button is pressed */
-  private backPressedListener() {
-    const instance = Router.instance;
+  /** Check if the back or forward button is pressed */
+  private historyChangeListener(event: PopStateEvent) {
+    if (event.state) {
+      //You can forward if you go out and back in website, then the website has no history list while the browser has it.
+      //So we check if the website forward page exits.
+      if (Router.instance.state.history.length > event.state.page) {
+        Router.instance.setState({ currentIndex: event.state.page });
+      } else {
+        //TODO Look for better code instead of history.back
+        history.back();
+      }
+    }
+  }
 
-    if (instance.state.history.length <= 1) {
-      history.back();
-    } else {
-      Router.closeView();
+  /** Push new route to router display */
+  private static push(route: IRoute) {
+    const instance = Router.instance;
+    const { history, currentIndex } = instance.state;
+
+    //Check if you can forward history
+    if (history.length - 1 > currentIndex) {
+      //Delete forward history
+      history.splice(currentIndex + 1);
     }
 
-    window.history.pushState(
-      {},
-      "page: " + instance.state.history[instance.state.history.length - 1].path
-    );
+    window.scrollTo(0, 0);
+    history.push(route);
+    instance.setState({ history, currentIndex: history.length - 1 });
+    window.history.pushState({ page: history.length - 1 }, "", route.path);
   }
 
   /**
@@ -51,14 +65,8 @@ export class Router extends Component<IProps, IState> {
    * @param view
    */
   public static openView(view: JSX.Element): void {
-    const instance = Router.instance;
-
     const newView: IRoute = { path: "/", component: view.type, props: view.props };
-
-    window.scrollTo(0, 0);
-    instance.setState({
-      history: [...instance.state.history, newView],
-    });
+    this.push(newView);
   }
 
   /**
@@ -67,12 +75,8 @@ export class Router extends Component<IProps, IState> {
    * @param props
    */
   public static openComponent<P = any>(component: React.ComponentType, props?: P) {
-    const instance = Router.instance;
-
     const newView: IRoute = { path: "/", component: component, props: props };
-
-    window.scrollTo(0, 0);
-    instance.setState({ history: [...instance.state.history, newView] });
+    this.push(newView);
   }
 
   /**
@@ -83,19 +87,8 @@ export class Router extends Component<IProps, IState> {
 
   /** Close the active view */
   public static closeView(): void {
-    const instance = Router.instance;
-
-    if (instance.state.history.length > 1) {
-      let tempHistory = instance.state.history;
-      tempHistory.splice(tempHistory.length - 1, 1);
-
-      window.scrollTo(0, 0);
-      instance.setState({
-        history: tempHistory,
-      });
-    } else {
-      console.log("Cannot open previous page because it does not exist");
-    }
+    history.back();
+    //window.scrollTo(0, 0);
   }
 
   /**
@@ -114,9 +107,11 @@ export class Router extends Component<IProps, IState> {
 
   /** Fill in all pages that can be rendered */
   public render(): ReactNode {
+    const { history, currentIndex } = this.state;
+
     return createElement(
-      this.state.history[this.state.history.length - 1].component,
-      { ...this.state.history[this.state.history.length - 1].props } as any,
+      history[currentIndex].component,
+      { ...history[currentIndex].props } as any,
       null
     );
   }
